@@ -1,0 +1,31 @@
+language: ruby
+rvm:
+  - 2.2.0
+  - 2.1.5
+  - ruby-head
+  - jruby-head
+  - rbx-2
+jdk:
+  - openjdk7
+  - oraclejdk8
+matrix:
+  exclude:
+    - rvm: 2.2.0
+      jdk: openjdk7
+      jdk: oraclejdk8
+    - rvm: 2.1.5
+      jdk: openjdk7
+      jdk: oraclejdk8
+    - rvm: 2.1.4
+      jdk: openjdk7
+      jdk: oraclejdk8
+    - rvm: ruby-head
+      jdk: openjdk7
+      jdk: oraclejdk8
+    - rvm: rbx-2
+      jdk: openjdk7
+      jdk: oraclejdk8
+  allow_failures:
+    - rvm: ruby-head
+    - rvm: jruby-head
+before_install: gem install bundler -v 1.10.6
