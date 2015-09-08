@@ -72,7 +72,7 @@ There's some special logic with copying singleton methods from a class to a modu
 unless specified otherwise, copying the method will place it in the target module's `instance_methods`,
 so that any class that `extend`s it will be able to use those as class methods.
 
-```
+```ruby
 module Scopes
 end
 
@@ -87,7 +87,7 @@ Scopes.instance_method(:vertebrates) # => #<UnboundMethod: Scopes#vertebrates>
 
 If you want to actually copy it to the target module's `methods`, use the `singleton_target` option:
 
-```
+```ruby
 CopyMethod.move_singleton :mammals, from: Animal, to: Scopes, singleton_target: true
 
 Animal.respond_to? :mammals # => false
