@@ -1,9 +1,13 @@
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 
-require 'simplecov'
-#require_relative './test_classes'
+# Don't check coverage in rubinius or ci
+unless RUBY_ENGINE == 'rbx' || ENV['TRAVIS'] || ENV['CI']
+  require 'english'
+  require 'simplecov'
 
-SimpleCov.start do
+  SimpleCov.start do
+    add_filter "spec/support"
+  end
 end
 
 require 'copy_method'
