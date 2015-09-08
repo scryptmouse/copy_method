@@ -124,6 +124,7 @@ module CopyMethod
     def attach_helper_module!
       helper_mod = CopyMethod::CopiedMethod.new origin, method_name, singleton: singleton_origin?
 
+      to.extend CopyMethod::HasCopiedMethods
       to.extend helper_mod
     end
 

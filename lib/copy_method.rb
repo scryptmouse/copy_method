@@ -1,6 +1,7 @@
 require "method_source"
 require "copy_method/version"
 require "copy_method/utils"
+require "copy_method/has_copied_methods"
 require "copy_method/method_copier"
 require "copy_method/copied_method"
 require "copy_method/integration"

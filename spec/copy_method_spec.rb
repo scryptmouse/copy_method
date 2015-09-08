@@ -5,107 +5,90 @@ describe CopyMethod do
     expect(CopyMethod::VERSION).not_to be nil
   end
 
-  context 'with a normal instance method' do
-    let(:animals) do
-      Class.new do
-        def sleep
-          :zzz
-        end
-      end
-    end
+  include_context 'test classes'
 
-    let (:abilities) do
-      Module.new
-    end
+  context 'when attempting to extend, include, or prepend' do
+    let(:test_class) { Class.new }
 
-    before(:each) do
-      stub_const("Animal", animals)
-      stub_const("Abilities", abilities)
+    include_examples 'prepending the base module'
+    include_examples 'extending the base module'
+    include_examples 'including the base module'
+  end
 
-      animals.include abilities
-    end
-
+  context 'on a normal instance method' do
     context 'with CopyMethod.copy to a module' do
-      let(:other_class) { Class.new }
-
-      before(:each) do
-        CopyMethod.copy :sleep, from: Animal, to: Abilities
-
-        other_class.include Abilities
-      end
-
-      it 'copies the method' do
-        expect(Abilities.instance_methods).to include :sleep
-      end
-
-      context 'when another class includes the target module' do
-        before(:each) do
-          other_class.include Abilities
-        end
-
-        specify 'the method works' do
-          expect(other_class.new.sleep).to eq :zzz
-        end
-      end
+      include_examples 'copying methods'
     end
 
-    context 'with CopyMethod.move to a module' do
-      before(:each) do
-        CopyMethod.move :sleep, from: Animal, to: Abilities
-      end
-
-      it 'moves the method' do
-        expect(Abilities.instance_methods).to include :sleep
-      end
-
-      it 'removes the method from the origin' do
-        expect(Animal.instance_methods(false)).to_not include :sleep
-      end
-
-      specify 'the method works as expected' do
-        expect(Animal.new.sleep).to eq :zzz
-      end
+    context 'with CopyMethod.move to a module', move: true do
+      include_examples 'moving methods'
     end
   end
 
   context 'on an instance method that references a constant' do
-    let(:animals) do
-      Class.new do
-        const_set :SOUND, "roar"
+    let(:copy_method) { :speak }
+    let(:copy_method_response) { const_value }
 
-        def speak
-          SOUND
+    context 'with CopyMethod.move to a module', move: true do
+      include_examples 'moving methods'
+
+      context 'and when looking up constants' do
+        let(:message_label) { "something" }
+
+        let(:location)  { double('method location', label: message_label) }
+        let(:locations) { double('caller locations') }
+
+        before(:each) do
+          allow(copy_target).to receive(:const_missing).and_call_original
+          allow(copy_target).to receive(:caller_locations).and_return(locations)
+          expect(locations).to  receive(:[]).with(0).once.and_return(location)
+        end
+
+        context 'when calling the moved method' do
+          let(:message_label) { copy_method.to_s }
+
+          it 'finds the constant' do
+            expect { call_method }.to_not raise_error
+
+            expect(copy_target).to have_received(:caller_locations).once.with(1,1)
+            expect(copy_target).to have_received(:const_missing).once.with(const_name)
+          end
+        end
+
+        context 'when looking up the constant outside of the method call' do
+          specify 'it raises the expected error' do
+            expect { copy_target.const_get const_name }.to raise_error NameError
+
+            expect(copy_target).to have_received(:const_missing).once.with(const_name)
+          end
         end
       end
     end
+  end
 
-    let (:abilities) do
-      Module.new
+  context 'on a singleton method' do
+    context 'copying to a module', to_module: true do
+      include_context 'copying singleton methods'
     end
 
-    before(:each) do
-      stub_const("Animal", animals)
-      stub_const("Abilities", abilities)
-
-      animals.include abilities
+    context 'copying to another class', to_class: true do
+      include_context 'copying singleton methods'
     end
 
-    context 'with CopyMethod.move to a module' do
-      before(:each) do
-        CopyMethod.move :speak, from: Animal, to: Abilities
-      end
+    context 'copying to a module with explicit singleton_target', to_module: true, singleton_target: true do
+      include_context 'copying singleton methods'
+    end
 
-      specify 'the method works as expected' do
-        expect(Animal.new.speak).to eq Animal::SOUND
-      end
+    context 'moving to a module', to_module: true, move: true do
+      include_context 'moving singleton methods'
+    end
 
-      it 'still accesses the constant' do
-        expect { Animal.new.speak }.to_not raise_error
-      end
+    context 'moving to another class', to_class: true, move: true do
+      include_context 'moving singleton methods'
+    end
 
-      it 'does not pollute the target module\'s constant lookups outside of the method call' do
-        expect { Abilities::SOUND }.to raise_error NameError
-      end
+    context 'moving to a module with explicit singleton_target', to_module: true, move: true, singleton_target: true do
+      include_context 'moving singleton methods'
     end
   end
 end
